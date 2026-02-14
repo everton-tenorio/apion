@@ -14,7 +14,7 @@ jobs:
       matrix:
         include:
           - os: ubuntu-latest
-            output_name: apion
+            output_name: apion-linux
             spec_file: apion.spec
           - os: windows-latest
             output_name: apion.exe
