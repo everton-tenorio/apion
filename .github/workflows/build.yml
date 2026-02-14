@@ -67,7 +67,7 @@ jobs:
           chmod +x dist/apion-macos
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v6
         with:
           name: ${{ matrix.output_name }}
           path: dist/${{ matrix.output_name }}
@@ -79,7 +79,7 @@ jobs:
     
     steps:
       - name: Download all artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v7
 
       - name: Create Release
         uses: softprops/action-gh-release@v1
