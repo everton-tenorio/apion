@@ -57,8 +57,8 @@ jobs:
       - name: Rename output (Linux)
         if: runner.os == 'Linux'
         run: |
-          mv dist/apion dist/apion
-          chmod +x dist/apion
+          mv dist/apion dist/apion-linux
+          chmod +x dist/apion-linux
 
       - name: Rename output (macOS)
         if: runner.os == 'macOS'
@@ -85,7 +85,7 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           files: |
-            apion/apion
+            apion/apion-linux
             apion.exe/apion.exe
             apion-macos/apion-macos
           body: |
