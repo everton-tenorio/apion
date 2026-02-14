@@ -1,0 +1,117 @@
+name: Build Apion
+
+on:
+  push:
+    tags:
+      - 'v*'  # Triggers on version tags like v1.0.0
+  workflow_dispatch:  # Allows manual trigger
+
+jobs:
+  build:
+    name: Build on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            output_name: apion
+            spec_file: apion.spec
+          - os: windows-latest
+            output_name: apion.exe
+            spec_file: apion.spec
+          - os: macos-latest
+            output_name: apion-macos
+            spec_file: apion.spec
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pyinstaller
+
+      - name: Build with PyInstaller (Linux/macOS)
+        if: runner.os != 'Windows'
+        run: |
+          pyinstaller --onefile \
+            --windowed \
+            --name apion \
+            --add-data "README.md:." \
+            --icon=icon.png \
+            --noconsole \
+            app.py
+
+      - name: Build with PyInstaller (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          pyinstaller --onefile --windowed --name apion --add-data "README.md;." --noconsole app.py
+
+      - name: Rename output (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          mv dist/apion dist/apion
+          chmod +x dist/apion
+
+      - name: Rename output (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          mv dist/apion dist/apion-macos
+          chmod +x dist/apion-macos
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ matrix.output_name }}
+          path: dist/${{ matrix.output_name }}
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+    
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v3
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            apion/apion
+            apion.exe/apion.exe
+            apion-macos/apion-macos
+          body: |
+            ## 🚀 Apion - HTTP Client Pro
+            
+            Download the executable for your system:
+            
+            - **Linux**: `apion`
+            - **Windows**: `apion.exe`
+            - **macOS**: `apion-macos`
+            
+            ### Installation
+            
+            #### Linux/macOS:
+            ```bash
+            chmod +x apion  # or apion-macos
+            ./apion
+            ```
+            
+            #### Windows:
+            Just double-click `apion.exe`
+            
+            ### From Source:
+            ```bash
+            pip install -r requirements.txt
+            python app.py
+            ```
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
